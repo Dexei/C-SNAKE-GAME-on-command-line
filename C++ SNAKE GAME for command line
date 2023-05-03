@@ -1,0 +1,447 @@
+#include <iostream>
+#include <conio.h>
+#include <windows.h>
+#include <ctime>
+#include <fstream> //To open your CSV File
+#include "mmsystem.h"	
+using namespace std;
+//Basic Snake Game run in cmd using C++
+//This Game is flickering free
+//With music 
+//With a local database for scores to be stored 
+HANDLE h = GetStdHandle(((DWORD)- 11)); //For the color
+
+const int wid = 32; //width
+const int high = 20; //Height
+bool end = false;
+int x = wid/ 2,y = high/ 2; //x for x axis and y for y axis
+int xkaon, ykaon; //Food coordinates
+int score = 0,mov = 0,clear = 0,highest = 0,xtail[100], ytail[100], tail = 0,prev2x,prev2y;
+char move;
+string plyr_name;
+bool spaces;
+
+gotoxy(int x, int y){
+	COORD c;
+	c.X = x;
+	c.Y = y;
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),c);
+}
+
+void hideCur(){ //Hide Cursor
+	CONSOLE_CURSOR_INFO cursor;
+	cursor.dwSize = 100;
+	cursor.bVisible = false;
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor);
+}
+
+void randm(){ //Give random coordinates
+	start:
+	srand(time(0));
+	xkaon = (rand() % wid);
+	ykaon = (rand() % high);
+	if(tail > 0)
+	for(int k = 0; k < tail; k++){ 
+		if(xkaon == xtail[k] && ykaon == ytail[k]){ 
+		//It will check if the new location of the food is not place on the top of the snake body
+			goto start;
+		}
+	}
+}
+
+void user_act(){
+	if(kbhit()){
+		switch (getch()){
+		case 72: //up
+				if(tail > 0){ //Disable the down button to avoid reverse move
+					if(move == 's'){
+					break;
+					}
+				}
+				move = 'w';
+				break;
+		case 80: //down
+				if(tail > 0){ //Disable the up button to avoid reverse move
+					if(move == 'w'){
+					break;
+					}
+				}
+				move = 's';
+				break;
+		case 77: //right
+				if(tail > 0){ //Disable the left button to avoid reverse move
+					if(move == 'a'){
+					break;
+					}
+				}
+				move = 'd';
+				break;
+		case 75: //left	
+				if(tail > 0){ //Disable the right button to avoid reverse move
+					if(move == 'd'){
+					break;
+					}
+				}
+				move = 'a';
+				break;
+		}
+	}
+}
+
+void arrow_clr(){
+	for(int i = 0; i < 4; i++){
+		gotoxy(51,(10 + clear) + i);
+		for(int j = 0; j < 2; j++){
+			cout<<" ";
+		}	
+	}	
+}
+
+void arrow(){ //arrow
+	char arrw[4][3] ={{"# "},
+					{"##"},
+					{"##"},
+					{"# "},};
+	for(int i = 0; i < 4; i++){
+		gotoxy(51,(10 + move) + i);
+		for(int j = 0; j < 2; j++){
+			if(arrw[i][j] == '#'){
+				cout<<char(219);
+			}
+			else
+			cout<<' '; 
+		}	
+	}
+}
+
+void play(){
+	char play[4][20]= {{"PPPP P    PPPP P  P"},
+					   {"P  P P    P  P PPPP"},
+					   {"PPPP P    PPPP    P"},
+					   {"P    PPPP P  P   P "}};
+	for(int i = 0; i < 4; i++){
+		gotoxy(55,10 + i);
+		for(int j = 0; j < 20; j++){
+			if(play[i][j] == 'P'){
+				cout<<char(219);
+			}
+			else
+			cout<<' '; 
+		}	
+	}
+}
+
+void exit(){
+	char exit[5][20]={{"EEEE E   E E EEEEE"},
+					  {"E     E E  E   E  "},
+					  {"EEEE   E   E   E  "},
+					  {"E     E E  E   E  "},
+					  {"EEEE E   E E   E  "}};
+	for(int i = 0; i < 5; i++){
+		gotoxy(55,16 + i);
+		for(int j = 0; j < 20; j++){
+			if(exit[i][j] == 'E'){
+			cout<<char(219);
+			}
+			else
+			cout<<' '; 
+		}
+	}
+}
+
+void gameover(){
+char over[11][27]= {{"GGGGGGGG GGGGG G   G GGGGG"},
+				   	{"GG       G   G GG GG G"},
+					{"GG  GGGG GGGGG G G G GGGGG"},
+					{"GG    GG G   G G   G G"},
+					{"GGGGGGGG G   G G   G GGGGG"},
+					{"                          "},
+					{"GGGGGGGG G   G GGGGG GGGGG"},
+					{"GG    GG G   G G     G   G"},
+					{"GG    GG G   G GGGGG GGGG"},
+					{"GG    GG  G G  G     G   G"},
+					{"GGGGGGGG   G   GGGGG G   G"}};
+		for(int i = 0; i < 11; i++){
+			gotoxy(49,5 + i);
+			for(int j = 0; j < 26; j++){
+				if(over[i][j] == 'G'){
+				SetConsoleTextAttribute(h,12); //Red
+					cout<<char(219);
+				}
+				else
+				cout<<" ";
+			}
+			cout<<endl;
+		}		
+		SetConsoleTextAttribute(h,6); //Change the color back to Gold
+	}
+
+class snake{
+	public:
+		void layout(){
+			gotoxy(45,0);
+			for(int i = 0; i <= wid + 1; i++){
+				cout<<char(219);
+			}
+			cout<<endl;
+			for(int j = 0; j < high; j++){					
+			gotoxy(45,1 + j);
+				for(int i = 0; i <=wid; i++){
+					if(i == 0){
+					cout<<char(219);
+					}
+				}
+				gotoxy(45+ wid + 1,1+ j);
+				cout<<char(219)<<endl;
+			}
+			gotoxy(45,21);
+			for(int i = 0; i <= wid + 1; i++){
+				cout<<char(219);
+			}
+		}
+		void game(){ //Call this func() if game starts
+		SetConsoleTextAttribute(h,6); //Gold
+			gotoxy(45,0);
+			for(int i = 0; i <= wid + 1; i++){
+				cout<<char(219); //top wall
+			}
+			cout<<endl;
+			for(int j = 0; j < high; j++){
+				gotoxy(45,1 + j);
+				for(int i = 0; i < wid; i++){
+					if(i == 0){
+					cout<<char(219); //left side wall
+					}
+					if(i == x && j == y){
+					SetConsoleTextAttribute(h,9); //blue color for the head
+						cout<<char(257); //Snake head
+					SetConsoleTextAttribute(h,6); //Change the color back to Gold
+					}
+					else if(xkaon == i && ykaon == j){
+					SetConsoleTextAttribute(h,10); //Green color for the food
+						cout<<char(259); //Food
+					SetConsoleTextAttribute(h,6); //Change the color back to Gold
+					}
+					else{
+						spaces = false;
+						if(tail > 0){
+							for(int s = 0; s < tail; s++){
+							if(xtail[s] == i && ytail[s] == j){
+							SetConsoleTextAttribute(h,12); //Red color for the body
+								cout<<'O'; //Tail
+							SetConsoleTextAttribute(h,6); //Change the color back to Gold
+								spaces = true;
+								}
+								}
+							}
+						if(!spaces){
+							cout<<' ';
+						}
+					}
+				}
+				cout<<char(219)<<endl; //right side wall
+			}
+			gotoxy(45,21);
+			for(int i = 0; i <= wid + 1; i++){
+				cout<<char(219); //down wall
+			}
+		}
+};
+
+void logic(){ //The Game logic
+	int prevX = xtail[0];
+	int prevY = ytail[0];
+	xtail[0] = x,ytail[0] = y;
+	for(int i = 1; i < tail; i++){
+		prev2x = xtail[i];
+		prev2y = ytail[i];
+		xtail[i] = prevX;
+		ytail[i] = prevY;
+		prevX = prev2x;
+		prevY = prev2y;
+	}
+	if(x == xkaon && y == ykaon){
+	PlaySound(TEXT("Bing.wav"),NULL,SND_ASYNC);
+	randm();
+	tail++;	
+	score++; //add 1 to player score	
+	}
+	switch (move){
+		case 'w':
+			y--;
+			break;
+		case 's':
+			y++;
+			break;
+		case 'd':
+			x++;
+			break;
+		case 'a':
+			x--;
+			break;
+	}
+	for(int l = 0; l < tail; l++){
+		if(x == xtail[l] && y == ytail[l]){ //Check if the snake did not bite its self
+			end = true;
+		}
+	}
+	if(x > wid || y > high|| x == -2 || y == -2){
+		end = true;
+	}
+}
+
+void side_info(){
+	SetConsoleTextAttribute(h,10); 
+	gotoxy(80,2);
+	cout<<"Score = "<<score;
+	gotoxy(80,3);
+	cout<<"Player = "<<plyr_name;
+	gotoxy(80,5);
+	if(score > highest){
+	cout<<"Highest score = "<<score;		
+	}
+	else
+	cout<<"Highest score = "<<highest;
+	SetConsoleTextAttribute(h,6); 
+}
+
+void high_score(){ //Show the highest score
+	int arr[100],d =0, c= 0;
+	char k[100];
+	ifstream myFileout;
+	string out,cpy;
+	myFileout.open("Game Data.csv");
+	while(myFileout.good()){
+		getline(myFileout,out,'\n');
+		int len = out.length();
+		cpy = out;
+		for(int i = 0; i < len; i++){
+			k[i] =  cpy[i];
+		}
+		arr[d] = atoi(k);
+		d++;
+		c++;
+		strcpy(k,"           ");
+	}
+	highest = arr[0];
+	for(int i = 0; i < c; i++){
+		if(arr[i] >= highest){
+			highest = arr[i];
+		}
+	}
+}
+
+void game(){
+	char snake[6][32]= {{"  SSSS-< S   S SSSS S  S SSSSS"},
+					    {" S       SS  S S  S S S  S     "},
+					    {" SSSS    S S S SSSS SS   SSSS  "},
+					    {"     S   S  SS S  S S S  S     "},
+					    {"SSSSS    S   S S  S S  S SSSSS "},
+						{"            BY LDTG            "}};
+	for(int i = 0; i < 6; i++){
+	SetConsoleTextAttribute(h,10); //Green color for the head
+		gotoxy(47,2 + i);
+		for(int j = 0; j < 31; j++){
+			if(snake[i][j] == 'S'){
+				cout<<char(219);
+			}
+			else
+			cout<<snake[i][j];
+		}
+		cout<<endl;
+	}
+	SetConsoleTextAttribute(h,15); 
+}
+
+int main() {
+	PlaySound(TEXT("Mario.wav"),NULL,SND_ASYNC);
+	high_score();
+	char moves = 'w'; //default value up
+	randm();
+	snake obj;
+	while(!end){
+	game();
+	hideCur();
+	obj.layout();
+	if(kbhit()){
+	switch (getch()){
+		case 72: //up
+			moves = 'w';
+			break;
+		case 80: //down
+			moves = 's';
+			break;
+		case 13:
+			end = true;
+	}
+	}
+		switch(moves){
+			case 'w': //up
+				move = 0;
+				clear = 7;
+				arrow();
+			SetConsoleTextAttribute(h,6); 
+				play();
+			SetConsoleTextAttribute(h,15); 
+				exit();
+			arrow_clr();
+				break;
+			case 's': //down
+				move = 7;
+				clear = 0;
+				arrow();
+				play();
+			SetConsoleTextAttribute(h,6); 
+				exit();
+			SetConsoleTextAttribute(h,15); 
+			arrow_clr();
+				break;
+		}
+	}
+	if(moves == 's'){
+		return 1; //Exit game
+	} 
+	else{
+		system("cls");
+		obj.layout();
+		gotoxy(53,10);
+		cout<<"Enter your name";
+		gotoxy(53,11);
+		cout<<"= ";
+		cin>>plyr_name;		
+	}
+	end = false;
+	PlaySound(TEXT("Bing.wav"),NULL,SND_ASYNC);
+	while(!end){
+	hideCur();
+	side_info();
+	user_act();
+	obj.game();
+	logic();
+	Sleep(30);
+	if(score > highest){
+		SetConsoleTextAttribute(h,6); 
+		SetConsoleTextAttribute(h,12); 
+		gotoxy(55,22);
+		cout<<"New high score!";
+		SetConsoleTextAttribute(h,6);  
+	}
+	}
+	system("cls");
+	PlaySound(TEXT("Gameover.wav"),NULL,SND_SYNC);
+	if(score > highest){
+		SetConsoleTextAttribute(h,6); 
+		SetConsoleTextAttribute(h,12); 
+		gotoxy(55,22);
+		cout<<"New high score!";
+	}
+	side_info();
+	obj.layout();
+	gameover();
+	ofstream Game_DATA;
+	Game_DATA.open("Game Data.csv",ios::app);
+	Game_DATA<<score<<','<<plyr_name<<endl;
+	Game_DATA.close();
+	system("pause");
+	return 0;
+}
