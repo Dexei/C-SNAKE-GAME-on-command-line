@@ -88,7 +88,7 @@ void user_act(){
 	}
 }
 
-void arrow_clr(){
+void arrow_clr(){//Hide the arrow
 	for(int i = 0; i < 4; i++){
 		gotoxy(51,(10 + clear) + i);
 		for(int j = 0; j < 2; j++){
@@ -116,9 +116,9 @@ void arrow(){ //arrow
 
 void play(){
 	char play[4][20]= {{"PPPP P    PPPP P  P"},
-					   {"P  P P    P  P PPPP"},
-					   {"PPPP P    PPPP    P"},
-					   {"P    PPPP P  P   P "}};
+			   {"P  P P    P  P PPPP"},
+			   {"PPPP P    PPPP    P"},
+			   {"P    PPPP P  P   P "}};
 	for(int i = 0; i < 4; i++){
 		gotoxy(55,10 + i);
 		for(int j = 0; j < 20; j++){
@@ -133,10 +133,10 @@ void play(){
 
 void exit(){
 	char exit[5][20]={{"EEEE E   E E EEEEE"},
-					  {"E     E E  E   E  "},
-					  {"EEEE   E   E   E  "},
-					  {"E     E E  E   E  "},
-					  {"EEEE E   E E   E  "}};
+			  {"E     E E  E   E  "},
+  		          {"EEEE   E   E   E  "},
+			  {"E     E E  E   E  "},
+			  {"EEEE E   E E   E  "}};
 	for(int i = 0; i < 5; i++){
 		gotoxy(55,16 + i);
 		for(int j = 0; j < 20; j++){
@@ -150,7 +150,7 @@ void exit(){
 }
 
 void gameover(){
-char over[11][27]= {{"GGGGGGGG GGGGG G   G GGGGG"},
+		    char over[11][27]= {{"GGGGGGGG GGGGG G   G GGGGG"},
 				   	{"GG       G   G GG GG G"},
 					{"GG  GGGG GGGGG G G G GGGGG"},
 					{"GG    GG G   G G   G G"},
@@ -305,7 +305,7 @@ void side_info(){
 	SetConsoleTextAttribute(h,6); 
 }
 
-void high_score(){ //Show the highest score
+void high_score(){ //Find and show the highest score base on the data in CSV file
 	int arr[100],d =0, c= 0;
 	char k[100];
 	ifstream myFileout;
@@ -332,7 +332,7 @@ void high_score(){ //Show the highest score
 }
 
 void game(){
-	char snake[6][32]= {{"  SSSS-< S   S SSSS S  S SSSSS"},
+		        char snake[6][32]= {{"  SSSS-< S   S SSSS S  S SSSSS"},
 					    {" S       SS  S S  S S S  S     "},
 					    {" SSSS    S S S SSSS SS   SSSS  "},
 					    {"     S   S  SS S  S S S  S     "},
@@ -440,7 +440,7 @@ int main() {
 	gameover();
 	ofstream Game_DATA;
 	Game_DATA.open("Game Data.csv",ios::app);
-	Game_DATA<<score<<','<<plyr_name<<endl;
+	Game_DATA<<score<<','<<plyr_name<<endl; //Save player name and score
 	Game_DATA.close();
 	system("pause");
 	return 0;
